@@ -1,4 +1,7 @@
-//This is a C code for calculating the motion of a two seperate 2-body problems.
+
+//This is a C code for calculating the motion of the sun earth mercury system as two seperate 2-body problems.
+//Written by Daniel Foulds-Holt 
+//df00177@surrey.ac.uk
 
 //== INCLUDES ==
 #include <stdio.h>
@@ -117,6 +120,10 @@ struct Vect{
 		z = Z_in;
 	}
 
+	void Print(){
+		printf("[%f, %f, %f]\n",x,y,z);
+	}
+
 	double Length(){
 		double LSqr = pow(x,2.0) + pow(y,2.0) + pow(z,2.0);
 		double L = pow(LSqr, 0.5);
@@ -209,16 +216,6 @@ int OutputIC(Status Planet1, Status Planet2, char* Filename){
 
 	FILE *fp;
 	fp = fopen(Filename, "w+");
-
-//	fprintf(fp, "\n == Initial Conditions ==\n\n");
-//	fprintf(fp, "Mass           = %f Solar Massess\n", IC.Mass);
-//	fprintf(fp, "Apoapsis       = %f AU\n", IC.Ap);
-//	fprintf(fp, "Periapsis      = %f AU\n", IC.Pe);
-//	fprintf(fp, "Eccentricity   = %f\n", IC.Ecc);
-//	fprintf(fp, "\n");
-//	fprintf(fp, "Apoapsis Vel.  = %f Units\n", IC.Va);
-//	fprintf(fp, "Periapsis Vel. = %f Units\n", IC.Vp);
-//	fprintf(fp, "\n");
 
 	fprintf(fp, "%f, ", Planet1.x);
 	fprintf(fp, "%f, ", Planet1.y);
@@ -327,19 +324,6 @@ void MoveToCOM(Status *Sun, Status *Planet) {
 	// ==================================
 }
 
-// Returns the total energy of the planet
-double GetEnergy(Status Planet) {
-	double TotalVSq = pow(Planet.v_x, 2.0) + pow(Planet.v_y, 2.0) + pow(Planet.v_z, 2.0);
-	
-	double Temp = pow(Planet.x, 2.0) + pow(Planet.y, 2.0) + pow(Planet.z, 2.0);
-	double R = pow(Temp, 0.5);
-
-	double KE = 0.5 * TotalVSq;
-	double PE = G * Planet.Mass / R;
-
-	return (KE - PE);
-} 
-
 // Returns the coefficant A
 double Return_AGR(Vect R, Vect V, double m1, double m2, int* Order, double c){
 
@@ -447,7 +431,7 @@ void MovePlanets(Status *Sun, Status *Planet, int*GRCorrections, double c, doubl
 	GRFact = -G * M / pow(R.Length(),2.0);
 	tempV = VectAdd(VectScale(N, A_GR), V, B_GR);
  	A = VectScale(tempV, GRFact);
-
+	
 	//Velocity - Pt. 2
 	Planet->v_x = NewVX + (A.x * TimePeriod / 2.0);
 	Planet->v_y = NewVY + (A.y * TimePeriod / 2.0);
@@ -543,68 +527,6 @@ Status ComputeInitConditions(double M1, double MS, double a, double e, double vf
 	return Planet;
 }
 
-
-OrbitalParameters IntOrbits(Status BH1, Status BH2, double c, int* GRCorrections, double TimeLength, double OP, double AP, char* Filename){
-
-	// Open & Name Files
-	FILE *OutputFile_BH1;
-	char title[32];
-	strcpy(title,Filename);
-	strcat(title, "_BH1Orbit.txt");
-	OutputFile_BH1 = fopen(title, "w+");
-
-	FILE *OutputFile_BH2;
-	char title2[32];
-	strcpy(title2,Filename);
-	strcat(title2, "_BH2Orbit.txt");
-	OutputFile_BH2 = fopen(title2, "w+");
-
-	printf("Performing integration...\n");
-	printf("\n");
-
-	//Get Parameters
-	Vect Ecc1 = CalculateEccVector(BH2, BH1);
-	SemiEcc SemEcc1 = ReturnSemiMajor_Ecc(BH2, BH1);
-
-	// == DO THE LOOP ==
-	// =================
-	for(int t = 0; t < TimeLength; t++) {
-		//BH1.Print();
-		//MovePlanets(&BH2, &BH1, GRCorrections, c, AP);
-		//BH1.Print();
-		OutputData(BH1, OutputFile_BH1);
-		MovePlanets(&BH1, &BH2, GRCorrections, c, AP);
-		//BH1.Print();
-		OutputData(BH2, OutputFile_BH2);
-		if(t % 10000 == 0.0){
-			printf("Time Elapsed = %f / %f\r", BH2.TimeElapsed, OP);
-			fflush(stdout);
-		}
-		if(BH2.TimeElapsed >= OP){
-			printf("Orbital period reached! T = %f\n", BH2.TimeElapsed);
-			break;
-		}
-	}  
-	// =================
-	// =================
-
-	printf("\n");
-	printf("Saving data to '%s' and '%s'.\n", title, title2);
-	printf("\n");
-
-	//Close Files
-	fclose(OutputFile_BH1);
-	fclose(OutputFile_BH2);
-
-	//Get Parameters
-	Vect Ecc2 = CalculateEccVector(BH2, BH1);
-	SemiEcc SemEcc2 = ReturnSemiMajor_Ecc(BH2, BH1);
-
-	//Return Orbital Parameters
-	OrbitalParameters Param = OrbitalParameters(Ecc1, Ecc2, SemEcc1, SemEcc2);
-	return Param;
-}
-
 // Version 2
 
 OrbitalParameters IntOrbits2(Status BH1, Status BH2, double c, int* GRCorrections, double TimeLength, double OP, double AP, char* Filename){
@@ -623,7 +545,7 @@ OrbitalParameters IntOrbits2(Status BH1, Status BH2, double c, int* GRCorrection
 	OutputFile_BH2 = fopen(title2, "w+");
 
 	FILE *OutputFile_EA;
-	OutputFile_EA = fopen("binary.ecc.orb", "w+");
+	OutputFile_EA = fopen("binary.circ.orb", "w+");
 
 	printf("Performing integration...\n");
 	printf("\n");
@@ -635,8 +557,12 @@ OrbitalParameters IntOrbits2(Status BH1, Status BH2, double c, int* GRCorrection
 	// == DO THE LOOP ==
 	// =================
 	for(int t = 0; t < TimeLength; t++) {
+		//BH1.Print();
+		//MovePlanets(&BH2, &BH1, GRCorrections, c, AP);
+		//BH1.Print();
 		OutputData(BH1, OutputFile_BH1);
 		MovePlanets(&BH1, &BH2, GRCorrections, c, AP);
+		//BH2.Print();
 		fprintf(OutputFile_EA, "%.15f, %.15f, %.15f\n", BH2.TimeElapsed, BH2.e, BH2.a);
 		OutputData(BH2, OutputFile_BH2);
 		if(t % 10000 == 0.0){
@@ -669,6 +595,25 @@ OrbitalParameters IntOrbits2(Status BH1, Status BH2, double c, int* GRCorrection
 	return Param;
 }
 
+// Semi-Major theory through Peter's equations
+void SemiMajorTheory(double c, double M1, double M2, double a_0, double lim){
+
+	double Beta = (pow(G, 3.0) / pow(c, 5.0)) * M1 * M2 * (M1 + M2);
+	double A;	
+
+	FILE* File;
+	File = fopen("peters.orb", "w+");
+
+	for(int ti=0; ti < lim; ti++){ 
+		A = pow(pow(a_0,4.0) - (256 * Beta * ti / 5.0), 0.25);
+		fprintf(File, "%f, %f\n", (ti / 100.0), A);
+	}
+
+	fclose(File);
+
+}
+
+
 //== PROGRAM ==
 
 int main() {
@@ -678,8 +623,9 @@ int main() {
 	printf("General Relativity - Coursework\n");
 	printf("===============================\n");
 	printf("\n");
+	printf("Submitted by: Daniel Foulds-Holt\n");
 	printf("         URN: 6424523\n");
-	printf("        Date: 16/05/20\n");
+	printf("        Date: 26/05/20\n");
 	printf("\n");
 	printf("This code is written to perform simulations of the two body\n");
 	printf("problem using a Leapfrog integrator with variable time-step.\n");
@@ -689,30 +635,14 @@ int main() {
 	printf("===============================\n");
 	printf("\n");
 	// =================================
-
-
-	// ============= Q. B  =============
-	printf("In order to run the code with as small errors as possible,\n");
-	printf("it is nessicary to use custom units:\n");
-	printf("\n");
-	printf("1 [R] = 1 [mpc] = 3.08568E+13 [m]\n");
-	printf("1 [T] = 1 [Year] = %f [s]\n", (365.25 * 24 * 60 * 60));
-	printf("1 [M] = %.15f [Solar Masses] = %E [kg]\n", 1.0/ComputeMassUnits(1), 1.0/ComputeMassUnits(1.0/(1.98855 * pow(10.0,30.0))));
-	printf("1 [V] = %.15f [m / s]\n", 1.0/ComputeVelUnits(1));
-	printf("\n");
-	printf("In these units the speed of light is: %.15f [V]\n", ComputeVelUnits(299792458));
-	printf("\n");
-	printf("===============================\n");
-	printf("\n");
-	// =================================
 	
 
-	// ============= Q. C  =============
+	// ============= Q. I  =============
 	//Reframe BH mass in new units [M]:
 	double M1 = ComputeMassUnits(7 * pow(10,6)); //[M]
 	double M2 = ComputeMassUnits(7 * pow(10,3)); //[M]
 	double a = 0.15; //mpc 
-	double e = 0.85;
+	double e = 0.0;
 	double M = M1 + M2;
 	double mu = M1 * M2 / M;
 
@@ -737,148 +667,31 @@ int main() {
 	//Correct positions
 	MoveToCOM(&BH1, &BH2);
 
+	//BH2.Print();	
+
 	//Output IC to file
-	OutputIC(BH1, BH2,(char*)"binary.ecc.init");
+	OutputIC(BH1, BH2,(char*)"binary.circ.init");
 	// =================================
 
 
-	// ============= Q. D  =============
-	// Compute advance of pericenter due to orbit
+	// ============= Q. J  =============
 	double c = ComputeVelUnits(299792458);
-	double deltaPhi = 6.0 * pi * M / (pow(c,2.0) * a * (1.0 - pow(e,2.0))); 
-
-	printf("The theoretical advance of pericentre per orbit due to\n");
-	printf("General Relativity is:\n");
-	printf("\n");
-	printf("Delta Phi = %.15f Radians / Orbit\n", deltaPhi);
-	printf("\n");
-	printf("===============================\n");
-	printf("\n");
-	// =================================
-
-
-	// ============= Q. E  =============
-
-	double OP_Temp = 4 * pow(pi,2.0) * pow(a,3.0) / (G * M);
-	double OrbitalPeriod = pow(OP_Temp,0.5);
-
-	double AP = 0.00001; // For accuracy
-
-	// == GR Corrections: P0 P1 P2 P2.5
-	int GRCorrections[] = {1, 0, 0, 0};
-
-	printf("Orbital Period = %f [yrs]\n", OrbitalPeriod);
- 	printf("\n");
-
-	double TimeLength = 1000000;
-
-	printf("Calculating orbit for the Black Holes.\n");
-
-	// Integrate Orbit for PN1
-	OrbitalParameters Params = IntOrbits(BH1, BH2, c, GRCorrections, TimeLength, OrbitalPeriod, AP, (char*)"NoPN");
-
-	printf("Repeating for PN1 + PN2 corrections.\n");
-
-	// Reset Positions
-	BH1 = Status(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, M1, 0.0);
-	BH2 = ComputeInitConditions(M2, M1, a, e, -1.0);
-	MoveToCOM(&BH1, &BH2);
-
-	//TimeLength = 2;
-	// Integrate Orbit for PN1 + PN2
-	GRCorrections[1] = 1;
-	GRCorrections[2] = 1;
-	Params = IntOrbits(BH1, BH2, c, GRCorrections, TimeLength, OrbitalPeriod, AP, (char*)"PN1PN2");
-
-	printf("===============================\n");
-	printf("\n");
-	// =================================
-
-
-	// ============= Q. F  =============
-
-	// OrbitalParameters = double E[2], A[2], EL[2], EPhi[2], DeltaPhi
- 	printf("With an accuracy parameter of: eta = %f \n", AP);
- 	printf("The numerical precesion was measured to be:  N Delta Phi = %f [rad]\n", Params.DeltaPhi);
- 	printf("This differs from the theoretical value of:  Delta Phi   = %f [rad]\n", deltaPhi);
-	printf("By : Total Discrepancy = %.15f\n", (Params.DeltaPhi - deltaPhi)); 
-	printf("\n");
-	printf("===============================\n");
-	printf("\n");
-
-	// =================================
-
-
-	// ============= Q. G  =============
-	double T_p = 2.0 * pi / Params.DeltaPhi;
-
-	printf("In order for the relative orbit to precess by 360 degrees, it\n");
-	printf("would take %f years.\n", T_p);
-	printf("\n");
-	printf("Integrating for %f years...\n", T_p);
-	printf("\n");
-
-	TimeLength = 1000000000;
-	AP = 0.001; // For accuracy
-	GRCorrections[1] = 0;
-
-	printf("Calculating orbit for the Black Holes.\n");
-
-	// Integrate Orbit for PN1
-	Params = IntOrbits(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"360dTurn_NoPN");
-
-	printf("Repeating for PN1 + PN2 corrections.\n");
-
-	// Reset Positions
-	BH1 = Status(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, M1, 0.0);
-	BH2 = ComputeInitConditions(M2, M1, a, e, -1.0);
-	MoveToCOM(&BH1, &BH2);
-
-	//TimeLength = 2;
-	// Integrate Orbit for PN1 + PN2
-	GRCorrections[1] = 1;
-	GRCorrections[1] = 1;
-	Params = IntOrbits(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"360dTurn_PN1PN2");
-
-	printf("\n");
-	printf("===============================\n");
-	printf("\n");
-	// =================================
-
-
-	// ============= Q. H  =============
-
-
-	BH2 = ComputeInitConditions(mu, M, a, e, 1.0);
-	BH1 = Status(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, M, 0.0);
-	MoveToCOM(&BH1, &BH2);
-
-	// Integrate Orbit for PN1 + PN2
-	T_p = 600.0;
-	// == GR Corrections: P0 P1 P2 P2.5
-	GRCorrections[0] = 1;
-	GRCorrections[1] = 0;
-	GRCorrections[2] = 0;
-	GRCorrections[3] = 1;
-
-	TimeLength = 100000000;
-	AP = 0.001;
+	double T_p = 600.0;
+	int GRCorrections[] = {1, 0, 0, 1};
+	double TimeLength = 100000000;
+	double AP = 0.001;
 	//AP = 0.00001; // For accuracy
 
-	Params = IntOrbits2(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"LongSim");
-
-	printf("\n");
-	printf("===============================\n");
-	printf("\n");
+	OrbitalParameters Params = IntOrbits2(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"Meaningless2");
 	// =================================
 
 
-	printf("\n");
-	printf("Code complete!\n");
-	printf("\n");
+	// ============= Q. K  =============
 
+	SemiMajorTheory(c, M1, M2, a, 60000);
+	printf("Saved all the a data to.... \n");
 
-// =====================================
+	// =================================
 
 }
 
