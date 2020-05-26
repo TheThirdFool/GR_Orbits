@@ -620,8 +620,8 @@ int main() {
 
 	// ============= INTRO =============
 	printf("\n");
-	printf("General Relativity - Coursework\n");
-	printf("===============================\n");
+	printf("General Relativity - Coursework: 2\n");
+	printf("==================================\n");
 	printf("\n");
 	printf("Submitted by: Daniel Foulds-Holt\n");
 	printf("         URN: 6424523\n");
@@ -667,8 +667,6 @@ int main() {
 	//Correct positions
 	MoveToCOM(&BH1, &BH2);
 
-	//BH2.Print();	
-
 	//Output IC to file
 	OutputIC(BH1, BH2,(char*)"binary.circ.init");
 	// =================================
@@ -682,16 +680,27 @@ int main() {
 	double AP = 0.001;
 	//AP = 0.00001; // For accuracy
 
-	OrbitalParameters Params = IntOrbits2(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"Meaningless2");
+	OrbitalParameters Params = IntOrbits2(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"LongSim_Circ");
+
+	printf("===============================\n");
+	printf("\n");
 	// =================================
 
 
 	// ============= Q. K  =============
-
 	SemiMajorTheory(c, M1, M2, a, 60000);
-	printf("Saved all the a data to.... \n");
 
+	printf("Saved all the a data to 'peters.orb'.\n");
+	printf("\n");
+	printf("===============================\n");
+	printf("\n");
 	// =================================
+
+	printf("\n");
+	printf("Code complete!\n");
+	printf("\n");
+
+// =====================================
 
 }
 

@@ -840,7 +840,6 @@ int main() {
 	GRCorrections[1] = 1;
 	Params = IntOrbits(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"360dTurn_PN1PN2");
 
-	printf("\n");
 	printf("===============================\n");
 	printf("\n");
 	// =================================
@@ -867,7 +866,6 @@ int main() {
 
 	Params = IntOrbits2(BH1, BH2, c, GRCorrections, TimeLength, T_p, AP, (char*)"LongSim");
 
-	printf("\n");
 	printf("===============================\n");
 	printf("\n");
 	// =================================
